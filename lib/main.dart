@@ -5,10 +5,17 @@ import 'auth_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MyApp());
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    runApp(const MyApp());
+  } on UnsupportedError catch (e) {
+    runApp(_StartupErrorApp(message: e.message ?? e.toString()));
+  } catch (e) {
+    runApp(_StartupErrorApp(message: 'Uygulama başlatılamadı: $e'));
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -63,6 +70,30 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const AuthGate(),
+    );
+  }
+}
+
+class _StartupErrorApp extends StatelessWidget {
+  final String message;
+
+  const _StartupErrorApp({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

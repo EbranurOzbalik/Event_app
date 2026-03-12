@@ -22,15 +22,22 @@ class EventService {
     required String location,
     required String date,
     required String createdBy,
-    required String createdByRole,
   }) async {
+    final userDoc = await _db.collection('users').doc(createdBy).get();
+    final userRole = (userDoc.data()?['role'] ?? 'user').toString();
+    final canCreate = userRole == 'admin' || userRole == 'moderator';
+
+    if (!canCreate) {
+      throw Exception('Etkinlik oluşturma yetkin yok.');
+    }
+
     await _db.collection('events').add({
       'title': title,
       'description': description,
       'location': location,
       'date': date,
       'createdBy': createdBy,
-      'createdByRole': createdByRole,
+      'createdByRole': userRole,
       'isActive': true,
       'createdAt': FieldValue.serverTimestamp(),
     });

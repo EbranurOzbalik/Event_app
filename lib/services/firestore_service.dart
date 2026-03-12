@@ -37,18 +37,25 @@ class FirestoreService {
     required String grade,
     required String userType,
   }) async {
-    await _db.collection('users').doc(uid).set({
+    final data = <String, dynamic>{
       'uid': uid,
-      'email': email,
       'fullName': fullName,
       'phone': phone,
       'faculty': faculty,
       'department': department,
       'grade': grade,
       'userType': userType,
-      'role': 'user',
       'profileCompleted': true,
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+
+    if (email.isNotEmpty) {
+      data['email'] = email;
+    }
+
+    await _db.collection('users').doc(uid).set(
+          data,
+          SetOptions(merge: true),
+        );
   }
 }

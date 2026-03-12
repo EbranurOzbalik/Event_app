@@ -93,9 +93,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(
+            TextFormField(
               enabled: false,
-              controller: TextEditingController(text: email),
+              initialValue: email,
               decoration: const InputDecoration(
                 labelText: 'Email',
                 border: OutlineInputBorder(),
@@ -144,7 +144,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _userType,
+              initialValue: _userType,
               items: const [
                 DropdownMenuItem(
                   value: 'ogrenci',

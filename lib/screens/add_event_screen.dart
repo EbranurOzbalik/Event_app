@@ -49,7 +49,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
         location: location,
         date: date,
         createdBy: user.uid,
-        createdByRole: widget.role,
       );
 
       if (mounted) {

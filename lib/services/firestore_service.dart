@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  FirebaseFirestore get _db => FirebaseFirestore.instance;
 
   Future<void> ensureUserDoc({
     required String uid,
@@ -16,6 +16,7 @@ class FirestoreService {
         'email': email,
         'fullName': '',
         'phone': '',
+        'phoneVerified': false,
         'faculty': '',
         'department': '',
         'grade': '',
@@ -41,6 +42,7 @@ class FirestoreService {
       'uid': uid,
       'fullName': fullName,
       'phone': phone,
+      'phoneVerified': false,
       'faculty': faculty,
       'department': department,
       'grade': grade,
@@ -53,9 +55,6 @@ class FirestoreService {
       data['email'] = email;
     }
 
-    await _db.collection('users').doc(uid).set(
-          data,
-          SetOptions(merge: true),
-        );
+    await _db.collection('users').doc(uid).set(data, SetOptions(merge: true));
   }
 }

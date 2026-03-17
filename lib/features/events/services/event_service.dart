@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/event_model.dart';
 
 class EventService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  FirebaseFirestore get _db => FirebaseFirestore.instance;
 
   Stream<List<EventModel>> getEvents() {
     return _db
@@ -11,26 +11,37 @@ class EventService {
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
-          .map((doc) => EventModel.fromMap(doc.id, doc.data()))
-          .toList(),
-    );
+              .map((doc) => EventModel.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   Future<void> addEvent({
     required String title,
     required String description,
+    required String category,
     required String location,
     required String date,
+    String imageUrl = '',
     required String createdBy,
-    required String createdByRole,
   }) async {
+    final userDoc = await _db.collection('users').doc(createdBy).get();
+    final userRole = (userDoc.data()?['role'] ?? 'user').toString();
+    final canCreate = userRole == 'admin' || userRole == 'moderator';
+
+    if (!canCreate) {
+      throw Exception('Etkinlik oluşturma yetkin yok.');
+    }
+
     await _db.collection('events').add({
       'title': title,
       'description': description,
+      'category': category,
       'location': location,
       'date': date,
+      'imageUrl': imageUrl,
       'createdBy': createdBy,
-      'createdByRole': createdByRole,
+      'createdByRole': userRole,
       'isActive': true,
       'createdAt': FieldValue.serverTimestamp(),
     });

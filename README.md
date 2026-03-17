@@ -1,17 +1,23 @@
-# event_app
+# Event App
 
-A new Flutter project.
+Flutter ve Firebase kullanılarak geliştirilen etkinlik yönetimi uygulaması.
 
-## Getting Started
+## Özellikler
+- Kullanıcı kayıt / giriş sistemi
+- Profil oluşturma ve düzenleme
+- Rol bazlı yetkilendirme (admin / user)
+- Etkinlik oluşturma
+- Etkinlik listeleme
+- Etkinliğe katılım sistemi
+- QR bilet / QR doğrulama ekranları
 
-This project is a starting point for a Flutter application.
+## Kullanılan Teknolojiler
+- Flutter
+- Firebase Authentication
+- Cloud Firestore
 
-A few resources to get you started if this is your first Flutter project:
+## Proje Amacı
+Kullanıcıların etkinlikleri görüntüleyebildiği, katılabildiği ve yetkili kullanıcıların etkinlik oluşturabildiği bir mobil uygulama geliştirmek.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Geliştirme Durumu
+Projenin temel kullanıcı yönetimi, etkinlik sistemi ve QR tabanlı yapı taşları tamamlanmıştır. Geliştirme süreci devam etmektedir.

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -13,11 +14,30 @@ class RegistrationService {
     return '${eventId}_$userId';
   }
 
-  String buildTicketCode({required String eventId, required String userId}) {
+  String buildLegacyTicketCode({
+    required String eventId,
+    required String userId,
+  }) {
     return '$_ticketPrefix${buildRegistrationId(eventId: eventId, userId: userId)}';
   }
 
-  String _extractRegistrationId(String ticketCode) {
+  String _generateTicketToken() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(18, (_) => random.nextInt(256));
+    return base64UrlEncode(bytes).replaceAll('=', '');
+  }
+
+  String _buildTicketCode({
+    required String registrationId,
+    required String ticketToken,
+  }) {
+    return jsonEncode({
+      'registrationId': registrationId,
+      'ticketToken': ticketToken,
+    });
+  }
+
+  _ParsedTicketPayload _parseTicketPayload(String ticketCode) {
     final normalized = ticketCode.trim();
 
     if (normalized.isEmpty) {
@@ -25,11 +45,18 @@ class RegistrationService {
     }
 
     final decoded = _maybeDecodeUriComponent(normalized);
-    final idFromJson = _tryExtractRegistrationIdFromJson(decoded);
-    final idFromUri = _tryExtractRegistrationIdFromUri(decoded);
+    final jsonPayload = _tryExtractPayloadFromJson(decoded);
+    final uriPayload = _tryExtractPayloadFromUri(decoded);
 
-    final candidate = idFromJson ?? idFromUri ?? _stripKnownPrefixes(decoded);
-    final registrationId = _stripKnownPrefixes(candidate).trim();
+    final registrationCandidate =
+        jsonPayload?.registrationId ??
+        uriPayload?.registrationId ??
+        _stripKnownPrefixes(decoded);
+    final registrationId = _stripKnownPrefixes(registrationCandidate).trim();
+    final token =
+        jsonPayload?.ticketToken?.trim() ??
+        uriPayload?.ticketToken?.trim() ??
+        '';
 
     if (registrationId.isEmpty) {
       throw Exception('QR kodu geçersiz.');
@@ -39,7 +66,10 @@ class RegistrationService {
       throw Exception('QR kodu formatı desteklenmiyor.');
     }
 
-    return registrationId;
+    return _ParsedTicketPayload(
+      registrationId: registrationId,
+      ticketToken: token.isEmpty ? null : token,
+    );
   }
 
   String _maybeDecodeUriComponent(String value) {
@@ -71,7 +101,7 @@ class RegistrationService {
     return current;
   }
 
-  String? _tryExtractRegistrationIdFromJson(String value) {
+  _ParsedTicketPayload? _tryExtractPayloadFromJson(String value) {
     if (!value.startsWith('{') || !value.endsWith('}')) {
       return null;
     }
@@ -82,7 +112,7 @@ class RegistrationService {
         return null;
       }
 
-      const keys = [
+      const idKeys = [
         'registrationId',
         'registration_id',
         'regId',
@@ -91,12 +121,17 @@ class RegistrationService {
         'code',
       ];
 
-      for (final key in keys) {
+      for (final key in idKeys) {
         final raw = decoded[key];
         if (raw == null) continue;
         final str = raw.toString().trim();
         if (str.isNotEmpty) {
-          return str;
+          final rawToken = decoded['ticketToken'] ?? decoded['token'];
+          final token = rawToken?.toString().trim();
+          return _ParsedTicketPayload(
+            registrationId: str,
+            ticketToken: token == null || token.isEmpty ? null : token,
+          );
         }
       }
     } catch (_) {}
@@ -104,7 +139,7 @@ class RegistrationService {
     return null;
   }
 
-  String? _tryExtractRegistrationIdFromUri(String value) {
+  _ParsedTicketPayload? _tryExtractPayloadFromUri(String value) {
     final uri = Uri.tryParse(value);
     if (uri == null) return null;
 
@@ -124,20 +159,32 @@ class RegistrationService {
       if (raw == null) continue;
       final normalized = raw.trim();
       if (normalized.isNotEmpty) {
-        return normalized;
+        final token = uri.queryParameters['ticketToken']?.trim();
+        return _ParsedTicketPayload(
+          registrationId: normalized,
+          ticketToken: token == null || token.isEmpty ? null : token,
+        );
       }
     }
 
     final fragment = uri.fragment.trim();
     if (fragment.isNotEmpty) {
-      return fragment;
+      final token = uri.queryParameters['ticketToken']?.trim();
+      return _ParsedTicketPayload(
+        registrationId: fragment,
+        ticketToken: token == null || token.isEmpty ? null : token,
+      );
     }
 
     final segments = uri.pathSegments;
     if (segments.isNotEmpty) {
       final last = segments.last.trim();
       if (last.isNotEmpty) {
-        return last;
+        final token = uri.queryParameters['ticketToken']?.trim();
+        return _ParsedTicketPayload(
+          registrationId: last,
+          ticketToken: token == null || token.isEmpty ? null : token,
+        );
       }
     }
 
@@ -151,7 +198,11 @@ class RegistrationService {
     required String userEmail,
   }) async {
     final docId = buildRegistrationId(eventId: eventId, userId: userId);
-    final ticketCode = buildTicketCode(eventId: eventId, userId: userId);
+    final ticketToken = _generateTicketToken();
+    final ticketCode = _buildTicketCode(
+      registrationId: docId,
+      ticketToken: ticketToken,
+    );
 
     final ref = _db.collection('registrations').doc(docId);
     final doc = await ref.get();
@@ -165,6 +216,7 @@ class RegistrationService {
       'userId': userId,
       'userName': userName,
       'userEmail': userEmail,
+      'ticketToken': ticketToken,
       'ticketCode': ticketCode,
       'joinedAt': FieldValue.serverTimestamp(),
       'checkedIn': false,
@@ -190,10 +242,59 @@ class RegistrationService {
         .snapshots();
   }
 
+  Stream<QuerySnapshot<Map<String, dynamic>>> getRegistrationsForEvent({
+    required String eventId,
+  }) {
+    return _db
+        .collection('registrations')
+        .where('eventId', isEqualTo: eventId)
+        .snapshots();
+  }
+
+  Future<String> getOrCreateTicketCode({
+    required String eventId,
+    required String userId,
+  }) async {
+    final registrationId = buildRegistrationId(
+      eventId: eventId,
+      userId: userId,
+    );
+    final ref = _db.collection('registrations').doc(registrationId);
+    final doc = await ref.get();
+
+    if (!doc.exists) {
+      return buildLegacyTicketCode(eventId: eventId, userId: userId);
+    }
+
+    final data = doc.data()!;
+    final existingCode = (data['ticketCode'] ?? '').toString().trim();
+    final existingToken = (data['ticketToken'] ?? '').toString().trim();
+
+    if (existingCode.isNotEmpty && existingToken.isNotEmpty) {
+      return existingCode;
+    }
+
+    final token = existingToken.isNotEmpty
+        ? existingToken
+        : _generateTicketToken();
+    final code = existingCode.isNotEmpty
+        ? existingCode
+        : _buildTicketCode(registrationId: registrationId, ticketToken: token);
+
+    await ref.set({
+      'ticketToken': token,
+      'ticketCode': code,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    return code;
+  }
+
   Future<Map<String, String>> checkInWithTicketCode({
     required String ticketCode,
   }) async {
-    final registrationId = _extractRegistrationId(ticketCode);
+    final payload = _parseTicketPayload(ticketCode);
+    final registrationId = payload.registrationId;
     final ref = _db.collection('registrations').doc(registrationId);
 
     return _db.runTransaction((transaction) async {
@@ -205,10 +306,15 @@ class RegistrationService {
 
       final data = doc.data()!;
       final checkedIn = data['checkedIn'] == true;
+      final storedToken = (data['ticketToken'] ?? '').toString().trim();
       final eventId = (data['eventId'] ?? '').toString();
       final eventRef = _db.collection('events').doc(eventId);
       final eventDoc = eventId.isEmpty ? null : await transaction.get(eventRef);
       final eventData = eventDoc?.data();
+
+      if (storedToken.isNotEmpty && storedToken != payload.ticketToken) {
+        throw Exception('Bilet token doğrulanamadı.');
+      }
 
       if (checkedIn) {
         throw Exception('Bu bilet daha önce okutulmuş.');
@@ -230,4 +336,14 @@ class RegistrationService {
       };
     });
   }
+}
+
+class _ParsedTicketPayload {
+  final String registrationId;
+  final String? ticketToken;
+
+  const _ParsedTicketPayload({
+    required this.registrationId,
+    required this.ticketToken,
+  });
 }

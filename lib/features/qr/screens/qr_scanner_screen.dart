@@ -275,7 +275,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                 minLines: 1,
                 textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
-                  hintText: 'event_ticket:eventId_userId',
+                  hintText: '{"registrationId":"...","ticketToken":"..."}',
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(

@@ -1,0 +1,95 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function userRole() {
+      return isSignedIn() && userDoc(request.auth.uid).exists()
+        ? userDoc(request.auth.uid).data.role
+        : null;
+    }
+
+    function isAdminOrModerator() {
+      return userRole() in ['admin', 'moderator'];
+    }
+
+    function participantOwnsRegistration() {
+      return isSignedIn() && request.resource.data.userId == request.auth.uid;
+    }
+
+    function currentUserOwnsRegistration() {
+      return isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    function registrationTicketBackfillOnly() {
+      return currentUserOwnsRegistration()
+        && resource.data.checkedIn == false
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.eventId == resource.data.eventId
+        && request.resource.data.userName == resource.data.userName
+        && request.resource.data.userEmail == resource.data.userEmail
+        && request.resource.data.checkedIn == resource.data.checkedIn
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'ticketToken',
+          'ticketCode',
+          'updatedAt'
+        ]);
+    }
+
+    function registrationCheckInOnly() {
+      return isAdminOrModerator()
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.eventId == resource.data.eventId
+        && request.resource.data.ticketToken == resource.data.ticketToken
+        && request.resource.data.ticketCode == resource.data.ticketCode
+        && request.resource.data.userName == resource.data.userName
+        && request.resource.data.userEmail == resource.data.userEmail
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'checkedIn',
+          'checkedInAt'
+        ]);
+    }
+
+    match /users/{uid} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+
+      allow create: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.role == 'user';
+
+      allow update: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.role == resource.data.role;
+    }
+
+    match /events/{eventId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdminOrModerator();
+    }
+
+    match /registrations/{registrationId} {
+      allow read: if isSignedIn()
+        && (currentUserOwnsRegistration() || isAdminOrModerator());
+
+      allow create: if participantOwnsRegistration()
+        && request.resource.data.eventId is string
+        && request.resource.data.userName is string
+        && request.resource.data.userEmail is string
+        && request.resource.data.ticketCode is string
+        && request.resource.data.ticketToken is string
+        && request.resource.data.checkedIn == false;
+
+      allow update: if registrationTicketBackfillOnly()
+        || registrationCheckInOnly();
+    }
+  }
+}

@@ -11,6 +11,7 @@ import '../services/event_service.dart';
 import '../services/registration_service.dart';
 import 'add_event_screen.dart';
 import 'notifications_screen.dart';
+import 'participants_screen.dart';
 import '../../qr/screens/qr_scanner_screen.dart';
 import '../../qr/screens/qr_ticket_screen.dart';
 
@@ -1307,6 +1308,7 @@ class _DiscoverTab extends StatelessWidget {
                         currentUserName: currentUserName,
                         currentUserEmail: currentUserEmail,
                         registrationService: registrationService,
+                        canManageParticipants: canCreate,
                       )
                     else
                       const _EmptyDiscoverCard(
@@ -1369,6 +1371,7 @@ class _DiscoverTab extends StatelessWidget {
                                     currentUserName: currentUserName,
                                     currentUserEmail: currentUserEmail,
                                     registrationService: registrationService,
+                                    canManageParticipants: canCreate,
                                   ),
                                 ),
                             ],
@@ -1849,6 +1852,7 @@ class _DiscoverTab extends StatelessWidget {
                   currentUserName: currentUserName,
                   currentUserEmail: currentUserEmail,
                   registrationService: registrationService,
+                  canManageParticipants: canCreate,
                 )
               else
                 const _EmptyDiscoverCard(
@@ -1921,6 +1925,7 @@ class _DiscoverTab extends StatelessWidget {
                       currentUserName: currentUserName,
                       currentUserEmail: currentUserEmail,
                       registrationService: registrationService,
+                      canManageParticipants: canCreate,
                     ),
                   ),
                 ),
@@ -2029,6 +2034,7 @@ class _FeaturedEventCard extends StatefulWidget {
   final String currentUserName;
   final String currentUserEmail;
   final RegistrationService registrationService;
+  final bool canManageParticipants;
 
   const _FeaturedEventCard({
     required this.event,
@@ -2036,6 +2042,7 @@ class _FeaturedEventCard extends StatefulWidget {
     required this.currentUserName,
     required this.currentUserEmail,
     required this.registrationService,
+    required this.canManageParticipants,
   });
 
   @override
@@ -2083,6 +2090,18 @@ class _FeaturedEventCardState extends State<_FeaturedEventCard> {
           eventTitle: widget.event.title,
           userId: widget.currentUserId,
           userName: widget.currentUserName,
+        ),
+      ),
+    );
+  }
+
+  void _showParticipants() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ParticipantsScreen(
+          event: widget.event,
+          registrationService: widget.registrationService,
         ),
       ),
     );
@@ -2284,53 +2303,81 @@ class _FeaturedEventCardState extends State<_FeaturedEventCard> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    StreamBuilder<bool>(
-                      stream: widget.registrationService.isJoined(
-                        eventId: event.id,
-                        userId: widget.currentUserId,
-                      ),
-                      builder: (context, snapshot) {
-                        final joined = snapshot.data ?? false;
-
-                        if (joined) {
-                          return OutlinedButton.icon(
-                            onPressed: _showTicket,
-                            icon: const Icon(Icons.qr_code_2_rounded, size: 18),
-                            label: const Text('Biletim'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: const BorderSide(color: Colors.white),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (widget.canManageParticipants)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: OutlinedButton.icon(
+                              onPressed: _showParticipants,
+                              icon: const Icon(
+                                Icons.groups_2_rounded,
+                                size: 18,
+                              ),
+                              label: const Text('Katılımcılar'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: const BorderSide(color: Colors.white),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
                               ),
                             ),
-                          );
-                        }
-
-                        return ElevatedButton(
-                          onPressed: _joining ? null : _joinEvent,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: gradient.first,
-                            minimumSize: const Size(104, 46),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
                           ),
-                          child: _joining
-                              ? SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: gradient.first,
+                        StreamBuilder<bool>(
+                          stream: widget.registrationService.isJoined(
+                            eventId: event.id,
+                            userId: widget.currentUserId,
+                          ),
+                          builder: (context, snapshot) {
+                            final joined = snapshot.data ?? false;
+
+                            if (joined) {
+                              return OutlinedButton.icon(
+                                onPressed: _showTicket,
+                                icon: const Icon(
+                                  Icons.qr_code_2_rounded,
+                                  size: 18,
+                                ),
+                                label: const Text('Biletim'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  side: const BorderSide(color: Colors.white),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
                                   ),
-                                )
-                              : const Text('Katıl'),
-                        );
-                      },
+                                ),
+                              );
+                            }
+
+                            return ElevatedButton(
+                              onPressed: _joining ? null : _joinEvent,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: gradient.first,
+                                minimumSize: const Size(104, 46),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                              ),
+                              child: _joining
+                                  ? SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: gradient.first,
+                                      ),
+                                    )
+                                  : const Text('Katıl'),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -2349,6 +2396,7 @@ class _UpcomingEventCard extends StatefulWidget {
   final String currentUserName;
   final String currentUserEmail;
   final RegistrationService registrationService;
+  final bool canManageParticipants;
 
   const _UpcomingEventCard({
     required this.event,
@@ -2356,6 +2404,7 @@ class _UpcomingEventCard extends StatefulWidget {
     required this.currentUserName,
     required this.currentUserEmail,
     required this.registrationService,
+    required this.canManageParticipants,
   });
 
   @override
@@ -2415,6 +2464,18 @@ class _UpcomingEventCardState extends State<_UpcomingEventCard> {
       SnackBar(
         content: Text(
           _favorited ? 'Favorilere eklendi.' : 'Favorilerden kaldırıldı.',
+        ),
+      ),
+    );
+  }
+
+  void _showParticipants() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ParticipantsScreen(
+          event: widget.event,
+          registrationService: widget.registrationService,
         ),
       ),
     );
@@ -2569,6 +2630,63 @@ class _UpcomingEventCardState extends State<_UpcomingEventCard> {
                   ),
                   builder: (context, snapshot) {
                     final joined = snapshot.data ?? false;
+
+                    if (widget.canManageParticipants) {
+                      return Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _showParticipants,
+                            icon: const Icon(Icons.groups_2_rounded, size: 18),
+                            label: const Text('Katılımcılar'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF0F766E),
+                              side: const BorderSide(color: Color(0xFF0F766E)),
+                              minimumSize: const Size(130, 40),
+                            ),
+                          ),
+                          if (joined)
+                            OutlinedButton.icon(
+                              onPressed: _showTicket,
+                              icon: const Icon(
+                                Icons.qr_code_2_rounded,
+                                size: 18,
+                              ),
+                              label: const Text('Biletim'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF2563EB),
+                                side: const BorderSide(
+                                  color: Color(0xFF2563EB),
+                                ),
+                                minimumSize: const Size(118, 40),
+                              ),
+                            )
+                          else
+                            ElevatedButton(
+                              onPressed: _joining ? null : _joinEvent,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: badgeColor,
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size(112, 40),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                ),
+                              ),
+                              child: _joining
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text('Katıl'),
+                            ),
+                        ],
+                      );
+                    }
 
                     if (joined) {
                       return OutlinedButton.icon(

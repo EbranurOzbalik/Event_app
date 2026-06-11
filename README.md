@@ -10,6 +10,17 @@ This project was developed to improve Flutter, Firebase, and mobile application 
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/login_screen.png" alt="Login screen" width="220" />
+  <img src="docs/screenshots/register_screen.png" alt="Register screen" width="220" />
+  <img src="docs/screenshots/profile_setup_screen.png" alt="Profile setup screen" width="220" />
+  <img src="docs/screenshots/add_event_screen.png" alt="Add event screen" width="220" />
+</p>
+
+---
+
 ## Features
 
 ### Authentication

@@ -34,16 +34,17 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .snapshots(),
         builder: (context, userSnapshot) {
           if (userSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-            return const Center(
-              child: Text('Kullanıcı verisi bulunamadı.'),
-            );
+            return const Center(child: Text('Kullanıcı verisi bulunamadı.'));
           }
 
           final userData = userSnapshot.data!.data()!;
@@ -70,10 +71,7 @@ class HomeScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(28),
                         gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF7E57C2),
-                            Color(0xFF5E35B1),
-                          ],
+                          colors: [Color(0xFF7E57C2), Color(0xFF5E35B1)],
                         ),
                       ),
                       child: Column(
@@ -99,7 +97,7 @@ class HomeScreen extends StatelessWidget {
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
+                              color: Colors.white.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
@@ -149,8 +147,11 @@ class HomeScreen extends StatelessWidget {
                     StreamBuilder<List<EventModel>>(
                       stream: eventService.getEvents(),
                       builder: (context, eventSnapshot) {
-                        if (eventSnapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                        if (eventSnapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
 
                         final events = eventSnapshot.data ?? [];
@@ -228,10 +229,7 @@ class _InfoRow extends StatelessWidget {
   final String title;
   final String value;
 
-  const _InfoRow({
-    required this.title,
-    required this.value,
-  });
+  const _InfoRow({required this.title, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -252,9 +250,7 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               value.isEmpty ? '-' : value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -297,9 +293,9 @@ class _EventCardState extends State<_EventCard> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Etkinliğe katıldın.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Etkinliğe katıldın.')));
       }
     } catch (e) {
       if (mounted) {
@@ -324,18 +320,12 @@ class _EventCardState extends State<_EventCard> {
           children: [
             Text(
               widget.event.title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
               widget.event.description,
-              style: const TextStyle(
-                color: Colors.black87,
-                height: 1.4,
-              ),
+              style: const TextStyle(color: Colors.black87, height: 1.4),
             ),
             const SizedBox(height: 12),
             Text('Konum: ${widget.event.location}'),
@@ -390,10 +380,10 @@ class _EventCardState extends State<_EventCard> {
                     onPressed: _joining ? null : _joinEvent,
                     child: _joining
                         ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Text('Etkinliğe Katıl'),
                   ),
                 );

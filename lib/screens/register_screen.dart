@@ -15,8 +15,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _password = TextEditingController();
   final _password2 = TextEditingController();
 
-  final _firestoreService = FirestoreService();
-
   bool _loading = false;
 
   Future<void> _register() async {
@@ -32,25 +30,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     if (pass1 != pass2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şifreler aynı değil.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Şifreler aynı değil.')));
       return;
     }
 
     setState(() => _loading = true);
 
     try {
-      final credential =
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: pass1,
-      );
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: pass1);
 
       final user = credential.user;
 
       if (user != null) {
-        await _firestoreService.ensureUserDoc(
+        await FirestoreService().ensureUserDoc(
           uid: user.uid,
           email: user.email ?? email,
         );
@@ -80,15 +75,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Beklenmeyen hata: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Beklenmeyen hata: $e')));
       }
     } finally {
       if (mounted) {
@@ -108,9 +103,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kayıt Ol'),
-      ),
+      appBar: AppBar(title: const Text('Kayıt Ol')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -148,10 +141,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onPressed: _loading ? null : _register,
                 child: _loading
                     ? const SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Text('Kayıt Ol'),
               ),
             ),

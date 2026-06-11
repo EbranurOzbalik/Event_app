@@ -14,7 +14,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
-  final _firestoreService = FirestoreService();
 
   bool _loading = false;
 
@@ -39,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final user = credential.user;
       if (user != null) {
-        await _firestoreService.ensureUserDoc(
+        await FirestoreService().ensureUserDoc(
           uid: user.uid,
           email: user.email ?? email,
         );
@@ -66,15 +65,15 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Beklenmeyen hata: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Beklenmeyen hata: $e')));
       }
     } finally {
       if (mounted) {
@@ -93,9 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Giriş Yap'),
-      ),
+      appBar: AppBar(title: const Text('Giriş Yap')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -124,10 +121,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _loading ? null : _login,
                 child: _loading
                     ? const SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Text('Giriş Yap'),
               ),
             ),
@@ -135,13 +132,13 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: _loading
                   ? null
                   : () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const RegisterScreen(),
-                  ),
-                );
-              },
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RegisterScreen(),
+                        ),
+                      );
+                    },
               child: const Text('Hesabın yok mu? Kayıt ol'),
             ),
           ],

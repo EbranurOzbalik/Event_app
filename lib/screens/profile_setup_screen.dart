@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import '../services/firestore_service.dart';
@@ -16,8 +17,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _faculty = TextEditingController();
   final _department = TextEditingController();
   final _grade = TextEditingController();
-
-  final _firestoreService = FirestoreService();
 
   String _userType = 'ogrenci';
   bool _loading = false;
@@ -47,7 +46,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     setState(() => _loading = true);
 
     try {
-      await _firestoreService.completeUserProfile(
+      await FirestoreService().completeUserProfile(
         uid: user.uid,
         email: user.email ?? '',
         fullName: fullName,
@@ -59,9 +58,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Profil kaydedilemedi: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Profil kaydedilemedi: $e')));
       }
     } finally {
       if (mounted) {
@@ -82,7 +81,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final email = FirebaseAuth.instance.currentUser?.email ?? '';
+    final email = Firebase.apps.isEmpty
+        ? ''
+        : FirebaseAuth.instance.currentUser?.email ?? '';
 
     return Scaffold(
       appBar: AppBar(
@@ -144,16 +145,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _userType,
+              initialValue: _userType,
               items: const [
-                DropdownMenuItem(
-                  value: 'ogrenci',
-                  child: Text('Öğrenci'),
-                ),
-                DropdownMenuItem(
-                  value: 'mezun',
-                  child: Text('Mezun'),
-                ),
+                DropdownMenuItem(value: 'ogrenci', child: Text('Öğrenci')),
+                DropdownMenuItem(value: 'mezun', child: Text('Mezun')),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -172,10 +167,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 onPressed: _loading ? null : _saveProfile,
                 child: _loading
                     ? const SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Text('Profili Kaydet'),
               ),
             ),

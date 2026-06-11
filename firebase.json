@@ -1,1 +1,53 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"event-app-ebra","appId":"1:820701014430:android:103e94e76f3e5043904e8f","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"event-app-ebra","appId":"1:820701014430:ios:a5710056819f9f5b904e8f","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"event-app-ebra","configurations":{"android":"1:820701014430:android:103e94e76f3e5043904e8f","ios":"1:820701014430:ios:a5710056819f9f5b904e8f"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "event-app-ebra",
+          "appId": "1:820701014430:android:103e94e76f3e5043904e8f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "event-app-ebra",
+          "appId": "1:820701014430:ios:a5710056819f9f5b904e8f",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "web": {
+        "default": {
+          "projectId": "event-app-ebra",
+          "appId": "1:820701014430:web:15870a9902d24e4e904e8f"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "event-app-ebra",
+          "configurations": {
+            "android": "1:820701014430:android:103e94e76f3e5043904e8f",
+            "ios": "1:820701014430:ios:a5710056819f9f5b904e8f",
+            "web": "1:820701014430:web:15870a9902d24e4e904e8f"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ]
+}

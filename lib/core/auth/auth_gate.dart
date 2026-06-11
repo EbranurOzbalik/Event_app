@@ -2,9 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'screens/home_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/profile_setup_screen.dart';
+import '../../features/auth/screens/login_screen.dart';
+import '../../features/events/screens/home_screen.dart';
+import '../../features/profile/screens/profile_setup_screen.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -58,10 +58,6 @@ class _LoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

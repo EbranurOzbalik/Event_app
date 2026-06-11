@@ -8,18 +8,6 @@ Event App allows users to register, complete their profiles, browse events, and 
 
 This project was developed to improve Flutter, Firebase, and mobile application development skills while building a real-world event management workflow.
 
----
-
-## Screenshots
-
-<p align="center">
-  <img src="docs/screenshots/home_dashboard.png" alt="Home dashboard screen" width="220" />
-  <img src="docs/screenshots/event_feed.png" alt="Event feed screen" width="220" />
-  <img src="docs/screenshots/add_event_screen.png" alt="Add event screen" width="220" />
-</p>
-
----
-
 ## Features
 
 ### Authentication

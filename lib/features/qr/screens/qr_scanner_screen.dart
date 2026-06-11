@@ -37,41 +37,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
       if (!mounted) return;
 
-      await showDialog<void>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Giriş Onaylandı'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  result['userName']?.isEmpty == true
-                      ? 'Katılımcı'
-                      : result['userName'] ?? 'Katılımcı',
-                ),
-                const SizedBox(height: 4),
-                Text(result['userEmail'] ?? ''),
-                const SizedBox(height: 8),
-                Text(
-                  'Etkinlik ID: ${result['eventId'] ?? '-'}',
-                  style: const TextStyle(
-                    color: Color(0xFF6E675F),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              FilledButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Tamam'),
-              ),
-            ],
-          );
-        },
-      );
+      await _showCheckInResult(result);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -91,6 +57,116 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     try {
       await _controller.start();
     } catch (_) {}
+  }
+
+  Future<void> _showCheckInResult(Map<String, String> result) async {
+    final userName = (result['userName'] ?? '').trim();
+    final userEmail = (result['userEmail'] ?? '').trim();
+    final eventTitle = (result['eventTitle'] ?? 'Etkinlik').trim();
+    final eventLocation = (result['eventLocation'] ?? '').trim();
+    final eventDate = (result['eventDate'] ?? '').trim();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          margin: const EdgeInsets.all(14),
+          padding: EdgeInsets.fromLTRB(
+            18,
+            18,
+            18,
+            MediaQuery.of(context).padding.bottom + 18,
+          ),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 28,
+                offset: const Offset(0, 16),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 74,
+                height: 74,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF10B981), Color(0xFF0F766E)],
+                  ),
+                ),
+                child: const Icon(
+                  Icons.verified_rounded,
+                  color: Colors.white,
+                  size: 42,
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Giriş Onaylandı',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF0F172A),
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                eventTitle.isEmpty ? 'Etkinlik bileti okutuldu.' : eventTitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF475569),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 18),
+              _ResultInfoCard(
+                icon: Icons.person_rounded,
+                title: userName.isEmpty ? 'Katılımcı' : userName,
+                subtitle: userEmail.isEmpty ? 'E-posta bulunamadı' : userEmail,
+              ),
+              const SizedBox(height: 10),
+              _ResultInfoCard(
+                icon: Icons.event_available_rounded,
+                title: eventLocation.isEmpty
+                    ? 'Konum belirtilmemiş'
+                    : eventLocation,
+                subtitle: eventDate.isEmpty ? 'Tarih belirtilmemiş' : eventDate,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Yeni bilet okut'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Kapat'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   bool _isDuplicateWithinCooldown(String code) {
@@ -309,6 +385,16 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                         ),
                         tooltip: 'Elle kod gir',
                       ),
+                      const SizedBox(width: 10),
+                      IconButton.filledTonal(
+                        onPressed: _processing ? null : _controller.toggleTorch,
+                        icon: const Icon(Icons.flash_on_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black.withValues(alpha: 0.35),
+                          foregroundColor: Colors.white,
+                        ),
+                        tooltip: 'Flaş',
+                      ),
                     ],
                   ),
                   const Spacer(),
@@ -353,6 +439,72 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResultInfoCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _ResultInfoCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE0F2FE),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: const Color(0xFF0369A1)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

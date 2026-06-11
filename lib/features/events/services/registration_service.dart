@@ -151,6 +151,7 @@ class RegistrationService {
     required String userEmail,
   }) async {
     final docId = buildRegistrationId(eventId: eventId, userId: userId);
+    final ticketCode = buildTicketCode(eventId: eventId, userId: userId);
 
     final ref = _db.collection('registrations').doc(docId);
     final doc = await ref.get();
@@ -164,6 +165,7 @@ class RegistrationService {
       'userId': userId,
       'userName': userName,
       'userEmail': userEmail,
+      'ticketCode': ticketCode,
       'joinedAt': FieldValue.serverTimestamp(),
       'checkedIn': false,
     });
@@ -203,6 +205,10 @@ class RegistrationService {
 
       final data = doc.data()!;
       final checkedIn = data['checkedIn'] == true;
+      final eventId = (data['eventId'] ?? '').toString();
+      final eventRef = _db.collection('events').doc(eventId);
+      final eventDoc = eventId.isEmpty ? null : await transaction.get(eventRef);
+      final eventData = eventDoc?.data();
 
       if (checkedIn) {
         throw Exception('Bu bilet daha önce okutulmuş.');
@@ -215,7 +221,10 @@ class RegistrationService {
 
       return {
         'registrationId': registrationId,
-        'eventId': (data['eventId'] ?? '').toString(),
+        'eventId': eventId,
+        'eventTitle': (eventData?['title'] ?? 'Etkinlik').toString(),
+        'eventLocation': (eventData?['location'] ?? '').toString(),
+        'eventDate': (eventData?['date'] ?? '').toString(),
         'userName': (data['userName'] ?? '').toString(),
         'userEmail': (data['userEmail'] ?? '').toString(),
       };

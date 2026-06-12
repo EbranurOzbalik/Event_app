@@ -10,8 +10,12 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(uid));
     }
 
+    function userDocPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
     function userRole() {
-      return isSignedIn() && userDoc(request.auth.uid).exists()
+      return isSignedIn() && exists(userDocPath(request.auth.uid))
         ? userDoc(request.auth.uid).data.role
         : null;
     }
